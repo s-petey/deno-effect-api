@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "dev": "deno run --watch src/main.ts"
+  },
+  "imports": {
+    "@effect/platform": "npm:@effect/platform@^0.72.0",
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}
