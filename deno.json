@@ -1,9 +1,16 @@
 {
   "tasks": {
-    "dev": "deno run --watch src/main.ts"
+    "dev": "deno run --allow-env --allow-read --allow-net --watch src/main.ts"
   },
   "imports": {
+    "@effect/opentelemetry": "npm:@effect/opentelemetry@^0.42.0",
     "@effect/platform": "npm:@effect/platform@^0.72.0",
-    "@std/assert": "jsr:@std/assert@1"
+    "@effect/platform-node": "npm:@effect/platform-node@^0.68.0",
+    "@opentelemetry/sdk-metrics": "npm:@opentelemetry/sdk-metrics@^1.30.0",
+    "@opentelemetry/sdk-trace-base": "npm:@opentelemetry/sdk-trace-base@^1.30.0",
+    "@opentelemetry/sdk-trace-node": "npm:@opentelemetry/sdk-trace-node@^1.30.0",
+    "@opentelemetry/sdk-trace-web": "npm:@opentelemetry/sdk-trace-web@^1.30.0",
+    "@std/assert": "jsr:@std/assert@1",
+    "effect": "npm:effect@^3.12.0"
   }
 }
