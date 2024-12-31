@@ -12,7 +12,9 @@ import { LoggerHandler } from '../libs/middleware/logging.ts';
 const RandomSleep = Effect.gen(function* () {
   const randomWait = yield* Random.nextRange(0.5, 2);
 
-  yield* Effect.sleep(Duration.seconds(randomWait));
+  yield* Effect.sleep(Duration.seconds(randomWait)).pipe(
+    Effect.tap(() => Effect.log(`Sleeping for ${randomWait}`))
+  );
 });
 
 // the `HttpApiBuilder.group` api returns a `Layer`
@@ -28,14 +30,13 @@ export const UsersHandlers: Layer.Layer<
           const user = users.find((u) => u.id === userId);
 
           if (!user) {
-            return Effect.fail(new UserNotFound());
+            throw new UserNotFound();
           }
 
-          return Effect.succeed(user);
+          return user;
         }),
-        // Optionally add additional information to the current span
-        Effect.tap(() => Effect.annotateCurrentSpan('info', 'find user')),
-        Effect.flatten
+        // Optionally add additional information to the current log
+        Effect.annotateLogs({ endpoint: 'findById', method: 'GET', userId })
       );
     })
 
@@ -43,9 +44,9 @@ export const UsersHandlers: Layer.Layer<
       pipe(
         Effect.gen(function* () {
           yield* RandomSleep;
-          return Effect.succeed(users);
+          return users;
         }),
-        Effect.flatten
+        Effect.annotateLogs({ endpoint: 'findMany', method: 'GET' })
       )
     )
     .handle('create', ({ payload }) =>
@@ -55,7 +56,7 @@ export const UsersHandlers: Layer.Layer<
           const user = users.find((u) => u.name === payload.name);
 
           if (user) {
-            return Effect.fail(new UserExists());
+            throw new UserExists();
           }
 
           const newUser: User = {
@@ -64,11 +65,12 @@ export const UsersHandlers: Layer.Layer<
             createdAt: DateTime.unsafeNow(),
           };
 
+          yield* Effect.log(`Created user: ${newUser.name}`);
           users.push(newUser);
 
-          return Effect.succeed(newUser);
+          return newUser;
         }),
-        Effect.flatten
+        Effect.annotateLogs({ endpoint: 'create', method: 'POST' })
       )
     )
     .handle('update', ({ path: { userId }, payload }) =>
@@ -78,7 +80,7 @@ export const UsersHandlers: Layer.Layer<
           const userIndex = users.findIndex((u) => u.id === userId);
 
           if (userIndex < 0) {
-            return Effect.fail(new UserNotFound());
+            throw new UserNotFound();
           }
 
           const user = users[userIndex];
@@ -88,11 +90,12 @@ export const UsersHandlers: Layer.Layer<
             ...payload,
           };
 
+          yield* Effect.log(`Updated user: ${updatedUser.name}`);
           users[userIndex] = updatedUser;
 
-          return Effect.succeed(updatedUser);
+          return updatedUser;
         }),
-        Effect.flatten
+        Effect.annotateLogs({ endpoint: 'update', method: 'PATCH', userId })
       )
     )
     .handle('delete', ({ path: { userId } }) =>
@@ -107,8 +110,9 @@ export const UsersHandlers: Layer.Layer<
 
           users.splice(users.indexOf(user), 1);
 
-          return Effect.succeed(user);
-        })
+          yield* Effect.log(`Deleted user: ${user.name}`);
+        }),
+        Effect.annotateLogs({ endpoint: 'delete', method: 'DELETE', userId })
       )
     )
 ).pipe(Layer.provide(LoggerHandler));
