@@ -1,5 +1,5 @@
 import { HttpApiMiddleware, HttpServerRequest } from '@effect/platform';
-import { Effect, Layer, Schema, Logger as EffectLogger } from 'effect';
+import { Effect, Layer, Schema } from 'effect';
 
 class LoggerError extends Schema.TaggedError<LoggerError>()(
   'LoggerError',
@@ -22,7 +22,6 @@ export const LoggerHandler = Layer.effect(
     return Logger.of(
       Effect.gen(function* () {
         const request = yield* HttpServerRequest.HttpServerRequest;
-        // yield* Effect.log(EffectLogger.pretty);
         yield* Effect.log(`Request: ${request.method} ${request.url}`);
       })
     );
